@@ -19,10 +19,25 @@
  */
 
 #include "stm32f4xx.h"
-			
+#include "teclado.h"
 
-int main(void)
-{
+int main(void) {
+    char teclaDetectada;
 
-	for(;;);
+    // Inicialización del sistema
+    inicializarTeclado();
+    // (También inicializa el pin del LED aquí como salida)
+
+    while(1) {
+        teclaDetectada = escanearTeclado(); // Le preguntamos al módulo qué pasa
+
+        if (teclaDetectada == '1') {
+            GPIO_SetBits(GPIOA, GPIO_Pin_5); // Encender LED (no importa si ya estaba prendido)
+        }
+        else if (teclaDetectada == '2') {
+            GPIO_ResetBits(GPIOA, GPIO_Pin_5); // Apagar LED (no importa si ya estaba apagado)
+        }
+
+        // El resto de las teclas no tienen 'else', así que no hacen nada.
+    }
 }
