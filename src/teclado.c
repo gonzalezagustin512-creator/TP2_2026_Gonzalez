@@ -1,16 +1,43 @@
+#include "stm32f4xx.h"
 #include "teclado.h"
 
-void inicializarTeclado(void) {
-    // Aquí configuras tus GPIOs:
-    // Filas como Salidas, Columnas como Entradas con Pull-Down
-    // (Usa los códigos de las PPTs que te pasaron)
+// Variables privadas para el estado actual
+static KeypadState_t currentState = STATE_INIT;
+
+void teclado_init(void) {
+    // Configuración de pines de filas (salidas) y columnas (entradas con pull-up/down)
+    // Pasar a STATE_DETECCION una vez terminado
 }
 
-char escanearTeclado(void) {
-    // Lógica simplificada de ejemplo:
-    // 1. Poner fila 1 en alto
-    // 2. Si Columna 1 está en alto -> return '1';
-    // 3. Si Columna 2 está en alto -> return '2';
+char teclado_fsm_update(void) {
+    char teclaDetectada = 0;
 
-    return 0; // Si no hay nada, devuelve 0
+    switch(currentState) {
+        case STATE_DETECCION:
+            // Acción: Escanear columnas en bucle
+            // Si detecta cambio -> ir a STATE_DEBOUNCE
+            break;
+
+        case STATE_DEBOUNCE:
+            // Acción: Esperar 20ms
+            // Al terminar tiempo -> ir a STATE_CONFIRMACION
+            break;
+
+        case STATE_CONFIRMACION:
+            // Acción: Leer filas y columnas de nuevo
+            // Si se mantiene -> ir a STATE_ESPERO_LIBERACION y guardar tecla
+            // Si no -> Volver a STATE_DETECCION (Falsa alarma)
+            break;
+
+        case STATE_ESPERO_LIBERACION:
+            // Acción: Esperar a que la tecla deje de estar presionada
+            // Al liberar -> Volver a STATE_DETECCION
+            break;
+
+        default:
+            currentState = STATE_DETECCION;
+            break;
+    }
+
+    return teclaDetectada;
 }
