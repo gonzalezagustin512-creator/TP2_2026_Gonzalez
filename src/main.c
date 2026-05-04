@@ -9,7 +9,6 @@
  * matricial de 4x4 y control de secuencias de un LED mediante intermitencias
  * y bases de tiempo variables.
  */
-
 #include "stm32f4xx.h"
 #include "teclado.h"
 
@@ -61,7 +60,7 @@ int main(void) {
             }
             // Si es un número (0-9) O un símbolo (*, #)
             if ((tecla >= '0' && tecla <= '9') || tecla == '*' || tecla == '#') {
-                // Hacemos 2 destellos muy rápidos para diferenciar de las letras
+                // Hacemos 2 destellos rápidos para diferenciar de las letras
                 for(int t=0; t<2; t++) {
                     GPIO_SetBits(GPIOD, GPIO_Pin_10);
                     delay_ms(50);
@@ -73,10 +72,10 @@ int main(void) {
         // ==========================================
 
         // B. Si la tecla es una letra (A-D), cambiar tiempoBase
-        // (Sigue como comentario...)
+
 
         // C. Si la tecla es número, calcular parpadeosRestantes = tecla + 1
-        // (Sigue como comentario...)
+
 
         // D. FSM del LED
         switch(ledState) {
