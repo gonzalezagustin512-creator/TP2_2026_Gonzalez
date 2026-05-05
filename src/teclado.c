@@ -5,19 +5,19 @@ static KeypadState_t currentState = STATE_INIT;
 static char teclaGuardada = 0;
 static uint32_t contadorTicks = 0;
 
-// ESTRUCTURA CON PINES: ROW(PE8-11), COL1(PC0), COL2(PC3), COL3(PC2), COL4(PA0)
+//pines de filas y columnas
 static Keypad_Config_t miTeclado = {
     .filas = {
-        {GPIOE, GPIO_Pin_8},  // ROW 1
-        {GPIOE, GPIO_Pin_9},  // ROW 2
-        {GPIOE, GPIO_Pin_10}, // ROW 3
-        {GPIOE, GPIO_Pin_11}  // ROW 4
+        {GPIOE, GPIO_Pin_8},  // fila 1
+        {GPIOE, GPIO_Pin_9},  // fila 2
+        {GPIOE, GPIO_Pin_10}, // fila 3
+        {GPIOE, GPIO_Pin_11}  // fila 4
     },
     .columnas = {
-        {GPIOC, GPIO_Pin_0},  // COL 1
-        {GPIOC, GPIO_Pin_3},  // COL 2
-        {GPIOC, GPIO_Pin_2},  // COL 3
-        {GPIOA, GPIO_Pin_0}   // COL 4
+        {GPIOC, GPIO_Pin_0},  // columna 1
+        {GPIOC, GPIO_Pin_3},  // columna 2
+        {GPIOC, GPIO_Pin_2},  // columna 3
+        {GPIOA, GPIO_Pin_0}   // columna 4
     }
 };
 
@@ -31,10 +31,10 @@ static char mapaTeclas[4][4] = {
 void teclado_init(void) {
     GPIO_InitTypeDef GPIO_InitStruct;
 
-    // Habilitamos los relojes de los puertos
+    // Habilito relojes de los puertos
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOE, ENABLE);
 
-    // Configuración de filas como SALIDAS
+    // ponemos las filas como output
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
@@ -44,7 +44,7 @@ void teclado_init(void) {
         GPIO_Init(miTeclado.filas[i].puerto, &GPIO_InitStruct);
     }
 
-    // Configuración de columnas como ENTRADAS con PULL-DOWN
+    // configuracion de columnas como input y pull down
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_DOWN;
     for (int i = 0; i < 4; i++) {
@@ -64,7 +64,7 @@ static char escanear_hardware(void) {
         // Set de la fila actual
         GPIO_SetBits(miTeclado.filas[f].puerto, miTeclado.filas[f].pin);
 
-        // Leemos las columnas
+        // lee columnas
         for (int c = 0; c < 4; c++) {
             if (GPIO_ReadInputDataBit(miTeclado.columnas[c].puerto, miTeclado.columnas[c].pin) == Bit_SET) {
                 return mapaTeclas[f][c];

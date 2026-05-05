@@ -3,7 +3,7 @@
 
 #include "stm32f4xx.h"
 
-// Estructura para manejar GPIO de forma genérica
+
 typedef struct {
     GPIO_TypeDef* puerto;
     uint16_t pin;
@@ -14,7 +14,7 @@ typedef struct {
     RegistroPin_t columnas[4];
 } Keypad_Config_t;
 
-// Enumeración de estados según el diagrama de la cátedra
+// enumeracion de estados
 typedef enum {
     STATE_INIT,
     STATE_DETECCION,
@@ -23,7 +23,7 @@ typedef enum {
     STATE_ESPERO_LIBERACION
 } KeypadState_t;
 
-// Prototipos de funciones
+
 void teclado_init(void);
 char teclado_fsm_update(void);
 

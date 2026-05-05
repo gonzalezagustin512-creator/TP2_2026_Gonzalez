@@ -3,11 +3,6 @@
  * Asignatura: Técnicas Digitales II
  * Alumno: Agustín González
  * Institución: UTN - Facultad Regional Bahía Blanca
- *
- * Descripción:
- * Implementación de una máquina de estados para el escaneo de un teclado
- * matricial de 4x4 y control de secuencias de un LED mediante intermitencias
- * y bases de tiempo variables.
  */
 #include "stm32f4xx.h"
 #include "teclado.h"
@@ -19,11 +14,11 @@ typedef enum {
 } LedState_t;
 
 int parpadeosRestantes = 0;
-int tiempoBase = 100;
+int tiempoBase = 100; // Velocidad inicial por defecto 100ms
 LedState_t ledState = LED_OUT;
 
 void delay_ms(uint32_t ms) {
-    for (uint32_t i = 0; i < (ms * 21000); i++) {
+    for (uint32_t i = 0; i < (ms * 10000); i++) {
         __NOP();
     }
 }
@@ -41,43 +36,49 @@ int main(void) {
 
     teclado_init();
 
-    parpadeosRestantes = 5;
-    ledState = LED_ON;
+    // comienzo sin parpadeos iniciales
+    parpadeosRestantes = 0;
+    ledState = LED_OUT;
 
     while (1) {
-        // A. Actualizar FSM del teclado y obtener tecla
+        // actualizar FSM del teclado y obtener tecla
         char tecla = teclado_fsm_update();
 
-
-        //        SECCION TEST TECLADO
-
         if (tecla != 0) {
-            // Si es una letra (A, B, C o D)
-            if (tecla >= 'A' && tecla <= 'D') {
-                GPIO_SetBits(GPIOD, GPIO_Pin_10); // Prender fijo para indicar letra
-                delay_ms(500);
-                GPIO_ResetBits(GPIOD, GPIO_Pin_10);
+            // si la tecla es una letra (A-D), cambiar tiempoBase
+            //  A=50ms, B=90ms, C=110ms, D=220ms
+            switch(tecla) {
+                case 'A': tiempoBase = 50;  break;
+                case 'B': tiempoBase = 90;  break;
+                case 'C': tiempoBase = 110; break;
+                case 'D': tiempoBase = 220; break;
             }
-            // Si es un número (0-9) O un símbolo (*, #)
-            if ((tecla >= '0' && tecla <= '9') || tecla == '*' || tecla == '#') {
-                // Hacemos 2 destellos rápidos para diferenciar de las letras
-                for(int t=0; t<2; t++) {
-                    GPIO_SetBits(GPIOD, GPIO_Pin_10);
-                    delay_ms(50);
-                    GPIO_ResetBits(GPIOD, GPIO_Pin_10);
-                    delay_ms(50);
-                }
+
+            // asignacion de parpadeos
+            int parpadeosNuevos = 0;
+
+            switch(tecla) {
+                case '0': parpadeosNuevos = 1;  break;
+                case '1': parpadeosNuevos = 2;  break;
+                case '2': parpadeosNuevos = 3;  break;
+                case '3': parpadeosNuevos = 4;  break;
+                case '4': parpadeosNuevos = 5;  break;
+                case '5': parpadeosNuevos = 6;  break;
+                case '6': parpadeosNuevos = 7;  break;
+                case '7': parpadeosNuevos = 8;  break;
+                case '8': parpadeosNuevos = 9;  break;
+                case '9': parpadeosNuevos = 10; break;
+                default:  parpadeosNuevos = 0; break; // ignora letra o simbolo
+            }
+
+            // si es un numero valido prende led
+            if (parpadeosNuevos != 0) {
+                parpadeosRestantes = parpadeosNuevos;
+                ledState = LED_ON;
             }
         }
-        // ==========================================
 
-        // B. Si la tecla es una letra (A-D), cambiar tiempoBase
-
-
-        // C. Si la tecla es número, calcular parpadeosRestantes = tecla + 1
-
-
-        // D. FSM del LED
+        // FSM del LED
         switch(ledState) {
             case LED_ON:
                 if (parpadeosRestantes > 0) {
