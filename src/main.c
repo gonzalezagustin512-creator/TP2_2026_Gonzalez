@@ -6,47 +6,53 @@
  */
 #include "stm32f4xx.h"
 #include "teclado.h"
+#include "led.h"
 
+//variable cuenta los ms
+volatile uint32_t msTicks = 0;
+
+// temporizador integrado ejecuta cada 1ms
+void SysTick_Handler(void) {
+    msTicks++;
+}
+
+/* //lo llevo a led.h
 typedef enum {
     LED_OUT,
     LED_ON,
     LED_OFF
 } LedState_t;
+*/
 
 int parpadeosRestantes = 0;
-int tiempoBase = 100; // Velocidad inicial por defecto 100ms
-LedState_t ledState = LED_OUT;
+int tiempoBase = 100;
+// LedState_t ledState = LED_OUT; // lo llevo a led.h
 
+/* // forma anterior de delay
 void delay_ms(uint32_t ms) {
     for (uint32_t i = 0; i < (ms * 10000); i++) {
         __NOP();
     }
 }
+*/
 
 int main(void) {
-    GPIO_InitTypeDef GPIO_InitStruct;
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+    // Configuracion de SysTick para disparar cada 1ms
+    SystemCoreClockUpdate();
+    if (SysTick_Config(SystemCoreClock / 1000)) {
+        while (1);
+    }
 
-    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10;
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(GPIOD, &GPIO_InitStruct);
-
+    led_init(); // funcion de inicializacion para el led
     teclado_init();
 
-    // comienzo sin parpadeos iniciales
     parpadeosRestantes = 0;
-    ledState = LED_OUT;
 
     while (1) {
-        // actualizar FSM del teclado y obtener tecla
+        // Actualizar FSM del teclado
         char tecla = teclado_fsm_update();
 
         if (tecla != 0) {
-            // si la tecla es una letra (A-D), cambiar tiempoBase
-            //  A=50ms, B=90ms, C=110ms, D=220ms
             switch(tecla) {
                 case 'A': tiempoBase = 50;  break;
                 case 'B': tiempoBase = 90;  break;
@@ -54,9 +60,7 @@ int main(void) {
                 case 'D': tiempoBase = 220; break;
             }
 
-            // asignacion de parpadeos
             int parpadeosNuevos = 0;
-
             switch(tecla) {
                 case '0': parpadeosNuevos = 1;  break;
                 case '1': parpadeosNuevos = 2;  break;
@@ -68,38 +72,14 @@ int main(void) {
                 case '7': parpadeosNuevos = 8;  break;
                 case '8': parpadeosNuevos = 9;  break;
                 case '9': parpadeosNuevos = 10; break;
-                default:  parpadeosNuevos = 0; break; // ignora letra o simbolo
+                default:  parpadeosNuevos = 0; break;
             }
-
-            // si es un numero valido prende led
             if (parpadeosNuevos != 0) {
-                parpadeosRestantes = parpadeosNuevos;
-                ledState = LED_ON;
+                led_start_blink(parpadeosNuevos, tiempoBase);
             }
         }
+        // fsm led (Ahora en led.c y no bloqueante)
+        led_fsm_update();
 
-        // FSM del LED
-        switch(ledState) {
-            case LED_ON:
-                if (parpadeosRestantes > 0) {
-                    GPIO_SetBits(GPIOD, GPIO_Pin_10);
-                    delay_ms(tiempoBase);
-                    ledState = LED_OFF;
-                } else {
-                    ledState = LED_OUT;
-                }
-                break;
-
-            case LED_OFF:
-                GPIO_ResetBits(GPIOD, GPIO_Pin_10);
-                delay_ms(tiempoBase);
-                parpadeosRestantes--;
-                ledState = LED_ON;
-                break;
-
-            case LED_OUT:
-                GPIO_ResetBits(GPIOD, GPIO_Pin_10);
-                break;
-        }
     }
 }
