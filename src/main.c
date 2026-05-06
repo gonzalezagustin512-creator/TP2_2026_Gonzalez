@@ -8,6 +8,8 @@
 #include "teclado.h"
 #include "led.h"
 
+//systick no va
+/*
 //variable cuenta los ms
 volatile uint32_t msTicks = 0;
 
@@ -15,41 +17,39 @@ volatile uint32_t msTicks = 0;
 void SysTick_Handler(void) {
     msTicks++;
 }
-
-/* //lo llevo a led.h
-typedef enum {
-    LED_OUT,
-    LED_ON,
-    LED_OFF
-} LedState_t;
 */
 
-int parpadeosRestantes = 0;
-int tiempoBase = 100;
-// LedState_t ledState = LED_OUT; // lo llevo a led.h
+// uso msticks como variable que se aumenta de a 1 en el while
+uint32_t msTicks = 0;
 
-/* // forma anterior de delay
+int parpadeosRestantes = 0;//
+int tiempoBase = 100;//tiempo que luego lo varian las letras
+
+//delay para controlar el tiempo del ciclo
 void delay_ms(uint32_t ms) {
     for (uint32_t i = 0; i < (ms * 10000); i++) {
         __NOP();
     }
 }
-*/
 
 int main(void) {
-    // Configuracion de SysTick para disparar cada 1ms
+    //no systick por ahora
+    /*
     SystemCoreClockUpdate();
     if (SysTick_Config(SystemCoreClock / 1000)) {
         while (1);
     }
+    */
 
-    led_init(); // funcion de inicializacion para el led
+    // se sugirio q puede ir en la fsm pero por ahroa queda aca
+    led_init();
     teclado_init();
 
     parpadeosRestantes = 0;
 
     while (1) {
         // Actualizar FSM del teclado
+    	// se sugirio manera de mejorar esta parte pero aun no se relaiza el cambio
         char tecla = teclado_fsm_update();
 
         if (tecla != 0) {
@@ -78,8 +78,13 @@ int main(void) {
                 led_start_blink(parpadeosNuevos, tiempoBase);
             }
         }
-        // fsm led (Ahora en led.c y no bloqueante)
+
+        // fsm led
         led_fsm_update();
 
+        //se agrega el delay ms 1  (retardo blouqeante frena todas las acciones dle procesador por 1ms)
+        //cada vuelta de while dura 1ms
+        delay_ms(1);
+        msTicks++; // incrementamos manualmente el contador de milisegundos
     }
 }
